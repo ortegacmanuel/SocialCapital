@@ -63,9 +63,9 @@ class SocialCapitalIndex extends Managed_DataObject
     }
 
     /**
-     * TODO: Document 
+     * TODO: Document
      */
-    static function init($user_id)
+    static function init($user_id, $twitter_user_array)
     {
         $sc = new SocialCapitalIndex();
         $sc->user_id = $user_id;
@@ -75,13 +75,15 @@ class SocialCapitalIndex extends Managed_DataObject
         $sc->ttl_bookmarks = 0;
 
         // Gather "Notice" information from db and place into appropriate arrays
-        $notices = self::cachedQuery('Notice', sprintf("SELECT * FROM notice 
-            WHERE profile_id = %d",
-            $user_id));
+        $sc->ttl_notices = $twitter_user_array['statuses_count'];
 
-
-        
-        $sc->ttl_notices = count($notices->_items);
+        // $notices = self::cachedQuery('Notice', sprintf("SELECT * FROM notice
+        //     WHERE profile_id = %d",
+        //     $user_id));
+        //
+        //
+        //
+        // $sc->ttl_notices = count($notices->_items);
 
             /*
         foreach($notices->_items as $notice) {
@@ -141,13 +143,13 @@ class SocialCapitalIndex extends Managed_DataObject
             // Notices
             $sa->graphs['trends'][$date_created->format('Y-m-d')]['notices'][] = $notice;
 
-            
+
             $sc->ttl_notices++; // FIXME: Do we want to include bookmarks with notices now that we have a 'bookmarks' trend?
         }
 
         */
 
-        
+
         // Favored notices (both by 'you' and 'others')
         $sc->ttl_faves = 0;
         $sc->ttl_o_faved = 0;
@@ -164,7 +166,7 @@ class SocialCapitalIndex extends Managed_DataObject
             }
         }
         */
-        
+
         // People who mentioned you
         $sc->ttl_mentions = 0;
         $mentions = self::listGetClass('Reply', 'profile_id', array($user_id));
@@ -178,10 +180,11 @@ class SocialCapitalIndex extends Managed_DataObject
         */
 
         // Hosts you are following
-        $sc->ttl_following = 0;
-        $arr_following = self::listGetClass('Subscription', 'subscriber', array($user_id));
-        
-        $sc->ttl_following = count($arr_following[$user_id]);
+        $sc->ttl_following = $twitter_user_array['friends_count'];
+        // $sc->ttl_following = 0;
+        // $arr_following = self::listGetClass('Subscription', 'subscriber', array($user_id));
+        //
+        // $sc->ttl_following = count($arr_following[$user_id]);
         /*
         foreach($arr_following[$user_id] as $following) {
             // This is in my DB, but doesn't show up in my 'Following' total (???)
@@ -193,10 +196,11 @@ class SocialCapitalIndex extends Managed_DataObject
         */
 
         // Hosts who follow you
-        $sc->ttl_followers = 0;
-        $followers = self::listGetClass('Subscription', 'subscribed', array($user_id));
-        
-        $sc->ttl_followers = count($followers[$user_id]);
+        $sc->ttl_followers = $twitter_user_array['followers_count'];
+        // $sc->ttl_followers = 0;
+        // $followers = self::listGetClass('Subscription', 'subscribed', array($user_id));
+        //
+        // $sc->ttl_followers = count($followers[$user_id]);
         /*
         foreach($followers[$user_id] as $follower) {
             // This is in my DB, but doesn't show up in my 'Following' total (???)

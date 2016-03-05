@@ -92,6 +92,25 @@ class SocialCapitalPlugin extends Plugin
         return true;
     }
 
+
+    /**
+     * Add social capital to the API response
+     *
+     */
+
+    function onTwitterUserArray($profile, &$twitter_user, $scoped)
+    {
+        try {
+            $sc = SocialCapitalIndex::init($profile->id, $twitter_user);
+            $index = $sc->index();
+            $twitter_user['social_capital'] = $index;
+        } catch (Exception $e) {
+            $twitter_user['social_capital'] = 'error';
+        }
+
+        return true;
+    }
+
     function onEndShowAccountProfileBlock(HTMLOutputter $out, Profile $profile) {
         $user = User::getKV('id', $profile->id);
         if ($user) {
@@ -107,20 +126,14 @@ class SocialCapitalPlugin extends Plugin
 
     function onQvitterEndShowHeadElements($action)
     {
-        
+
         print '<link rel="stylesheet" type="text/css" href="'.$this->path('css/socialcapital.css').'" />'."\n ";
-                                        
+
     }
 
-    function onQvitterEndShowScripts($action, $user_id)
+    function onQvitterEndShowScripts($action)
     {
-        $user = User::getKV('id', $user_id);
-        if ($user) {
-
-                $this->sc = SocialCapitalIndex::init($user->id);
-                print '<input type="hidden" id="social_capital" value="' . $this->sc->index() . '" />';
-        }
-        print '<script type="text/javascript" src="'.$this->path('js/socialcapital.qvitter.js').'"></script>'."\n"; 
+        print '<script type="text/javascript" src="'.$this->path('js/socialcapital.qvitter.js').'"></script>'."\n";
     }
 
 }
