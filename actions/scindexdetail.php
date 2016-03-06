@@ -143,6 +143,11 @@ class SCIndexDetailAction extends Action
 
             $this->element('p', array('class' => 'greeting'),
                            // TRANS: Message in sample plugin. %s is a user nickname.
+                           sprintf(_m('La publicaciones de %s han sido compartidas %d veces'), $this->profile->fullname, $this->sc->ttl_shared));
+
+
+            $this->element('p', array('class' => 'greeting'),
+                           // TRANS: Message in sample plugin. %s is a user nickname.
                            sprintf(_m('El Social Capital Index de %s es: %.2f'), $this->profile->fullname, $this->sc->index()));
 
         }
