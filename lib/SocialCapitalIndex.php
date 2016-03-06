@@ -180,10 +180,8 @@ class SocialCapitalIndex extends Managed_DataObject
         */
 
         // People who mentioned you
-        $sc->ttl_mentions = 0;
-        $mentions = self::listGetClass('Reply', 'profile_id', array($user_id));
+        $sc->ttl_mentions = SocialCapitalIndex::mentionsCount($profile->id);
 
-        $sc->ttl_mentions = count($mentions[$user_id]);
         /*
         foreach($mentions[$user_id] as $mention) {
 
@@ -236,4 +234,30 @@ class SocialCapitalIndex extends Managed_DataObject
         $participacion = $this->ttl_mentions + $this->ttl_following;
         return round( ($emision + $adhesion + $participacion) , 2);
     }
+
+    function mentionsCount($profile_id)
+    {
+        $c = Cache::instance();
+
+        if (!empty($c)) {
+            $cnt = $c->get(Cache::key('socialcapital:mention_count:'.$profile_id));
+            if (is_integer($cnt)) {
+                return (int) $cnt;
+            }
+        }
+
+        $rep = new Reply();
+        $rep->profile_id = $profile_id;
+
+        $cnt = (int) $rep->count();
+
+        $cnt = ($cnt > 0) ? $cnt - 1 : $cnt;
+
+        if (!empty($c)) {
+            $c->set(Cache::key('socialcapital:mention_count:'.$profile_id), $cnt);
+        }
+
+        return $cnt;
+    }
+
 }

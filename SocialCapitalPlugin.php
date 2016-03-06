@@ -67,7 +67,7 @@ class SocialCapitalPlugin extends Plugin
             'name' => 'SocialCapital',
             'version' => GNUSOCIAL_VERSION,
             'author' => 'Manuel Ortega',
-            'homepage' => 'http://bitujo.enkidu.coop',
+            'homepage' => 'http://git.lasindias.club/manuel/SocialCapital',
             // TRANS: Plugin description.
             'rawdescription' => _m('Social capital index')
         );
