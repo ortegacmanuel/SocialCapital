@@ -35,5 +35,5 @@ $('body').on('DOMNodeInserted', function(e) {
     var userData = JSON.parse(profileCard.children('script.profile-json').text());
 
     // add the number to the profile card
-    profileCard.children('.profile-header-inner').prepend('<div class="social-capital-number"><a data-tooltip="' + window.sL.socialCapitalTooltip + '" href="' + window.siteInstanceURL + 'socialcapital">' + userData.social_capital + '</a></div>');
+    profileCard.children('.profile-header-inner').prepend('<div class="social-capital-number"><a data-tooltip="' + window.sL.socialCapitalTooltip + '" href="' + window.siteInstanceURL + 'socialcapital/index/' + userData.id + '">' + userData.social_capital + '</a></div>');
 });

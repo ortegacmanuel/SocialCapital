@@ -23,6 +23,9 @@ if (!defined('GNUSOCIAL') || !defined('STATUSNET')) {
     exit(1);
 }
 
+$dir = dirname(__FILE__);
+include_once $dir . '/lib/SocialCapitalIndex.php';
+
 /**
  * Social Capital Plugin
  *
@@ -45,18 +48,18 @@ class SocialCapitalPlugin extends Plugin
         return true;
     }
 
-    function onAutoload($cls)
-    {
-        $dir = dirname(__FILE__);
-        switch ($cls)
-        {
-            case 'SocialCapitalIndex':
-                include_once $dir . '/lib/'.$cls.'.php';
-                return false;
-            default:
-                return true;
-        }
-    }
+    //function onAutoload($cls)
+    //{
+    //   $dir = dirname(__FILE__);
+    //    switch ($cls)
+    //    {
+    //        case 'SocialCapitalIndex':
+    //            include_once $dir . '/lib/'.$cls.'.php';
+    //            return false;
+    //        default:
+    //            return true;
+    //    }
+    //}
 
     function onPluginVersion(array &$versions)
     {
@@ -83,7 +86,10 @@ class SocialCapitalPlugin extends Plugin
      */
     public function onStartInitializeRouter(URLMapper $m)
     {
-
+        $m->connect('socialcapital/index/:id',
+                    array(  'action' => 'scindexdetail',
+                            'id' => '[0-9]+'
+                         ));
         return true;
     }
 
@@ -101,7 +107,7 @@ class SocialCapitalPlugin extends Plugin
     function onTwitterUserArray($profile, &$twitter_user, $scoped)
     {
         try {
-            $sc = SocialCapitalIndex::init($profile->id, $twitter_user);
+            $sc = SocialCapitalIndex::init($profile->id);
             $index = $sc->index();
             $twitter_user['social_capital'] = $index;
         } catch (Exception $e) {

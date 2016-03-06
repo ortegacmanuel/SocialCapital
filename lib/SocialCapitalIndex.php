@@ -65,17 +65,29 @@ class SocialCapitalIndex extends Managed_DataObject
     /**
      * TODO: Document
      */
-    static function init($user_id, $twitter_user_array)
+    static function init($user_id)
     {
         $sc = new SocialCapitalIndex();
         $sc->user_id = $user_id;
+        $sc->ttl_notices = 0;
+        $sc->ttl_replies = 0;
+        $sc->ttl_bookmarks = 0;
+        $sc->ttl_followers = 0;
+        $sc->ttl_mentions = 0;
+        $sc->ttl_following = 0;
+
+        $user = User::getKV('id', $user_id);
+
+        if (!empty($user)) {
+
+        $profile = $user->getProfile();
 
         $sc->ttl_notices = 0;
         $sc->ttl_replies = 0;
         $sc->ttl_bookmarks = 0;
 
         // Gather "Notice" information from db and place into appropriate arrays
-        $sc->ttl_notices = $twitter_user_array['statuses_count'];
+        $sc->ttl_notices = $profile->noticeCount();
 
         // $notices = self::cachedQuery('Notice', sprintf("SELECT * FROM notice
         //     WHERE profile_id = %d",
@@ -180,7 +192,7 @@ class SocialCapitalIndex extends Managed_DataObject
         */
 
         // Hosts you are following
-        $sc->ttl_following = $twitter_user_array['friends_count'];
+        $sc->ttl_following = $profile->subscriptionCount();
         // $sc->ttl_following = 0;
         // $arr_following = self::listGetClass('Subscription', 'subscriber', array($user_id));
         //
@@ -196,7 +208,7 @@ class SocialCapitalIndex extends Managed_DataObject
         */
 
         // Hosts who follow you
-        $sc->ttl_followers = $twitter_user_array['followers_count'];
+        $sc->ttl_followers = $profile->subscriberCount();
         // $sc->ttl_followers = 0;
         // $followers = self::listGetClass('Subscription', 'subscribed', array($user_id));
         //
@@ -211,8 +223,9 @@ class SocialCapitalIndex extends Managed_DataObject
             $sc->ttl_followers++;
         }
         */
+        }
 
-        return $sc;
+        return $sc;    
     }
 
     function index()
