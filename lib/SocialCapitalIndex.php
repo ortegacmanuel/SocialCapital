@@ -184,7 +184,7 @@ class SocialCapitalIndex extends Managed_DataObject
         // People who mentioned you
         $sc->ttl_mentions = SocialCapitalIndex::mentionsCount($profile->id);
 
-        //$sc->ttl_faved = SocialCapitalIndex::favesCount($profile->id);
+        $sc->ttl_faved = SocialCapitalIndex::favesCount($profile->id, $sc);
 
         /*
         foreach($mentions[$user_id] as $mention) {
@@ -264,7 +264,7 @@ class SocialCapitalIndex extends Managed_DataObject
         return $cnt;
     }
 
-    function favesCount($profile_id)
+    function favesCount($profile_id, $sc)
     {
         $c = Cache::instance();
 
@@ -275,22 +275,13 @@ class SocialCapitalIndex extends Managed_DataObject
             }
         }
 
-        $faved = self::cachedQuery('Fave', sprintf("SELECT * FROM fave"));
+        $qry = sprintf('select count(*) '.
+                       'from fave join notice '.
+                       'on (fave.notice_id = notice.id) ' .
+                       'where notice.profile_id = %d ' ,
+                       $profile_id);
 
-        $faves = 0;
-
-        foreach($faved->_items as $fave) {
-
-            $notice = Notice::getKV('id', $fave->notice_id);
-
-            // User's faves
-            if(!empty($notice)){
-
-                if($notice->profile_id == $profile_id) {
-                    $faves++;
-                }
-            }
-        }
+        $faves = $sc->query($qry);
 
         $cnt = (int) $faves;
 
