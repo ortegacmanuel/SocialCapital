@@ -184,7 +184,7 @@ class SocialCapitalIndex extends Managed_DataObject
         // People who mentioned you
         $sc->ttl_mentions = SocialCapitalIndex::mentionsCount($profile->id);
 
-        $sc->ttl_faved = SocialCapitalIndex::favesCount($profile->id);
+        //$sc->ttl_faved = SocialCapitalIndex::favesCount($profile->id);
 
         /*
         foreach($mentions[$user_id] as $mention) {
