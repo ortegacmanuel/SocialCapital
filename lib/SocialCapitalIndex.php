@@ -151,9 +151,9 @@ class SocialCapitalIndex extends Managed_DataObject
 
 
         // Favored notices (both by 'you' and 'others')
-        $sc->ttl_faves = 0;
-        $sc->ttl_o_faved = 0;
-        $faved = self::cachedQuery('Fave', sprintf("SELECT * FROM fave"));
+        //$sc->ttl_faves = 0;
+        //$sc->ttl_o_faved = 0;
+        //$faved = self::cachedQuery('Fave', sprintf("SELECT * FROM fave"));
 
         /*
         foreach($faved->_items as $fave) {
@@ -218,7 +218,8 @@ class SocialCapitalIndex extends Managed_DataObject
     function index()
     {
         $emision = ($this->ttl_notices * 20) / 100;
-        $adhesion = $this->ttl_o_faved + $this->ttl_followers;
+        //$adhesion = $this->ttl_o_faved + $this->ttl_followers;
+        $adhesion = $this->ttl_followers;
         $participacion = $this->ttl_mentions + $this->ttl_following;
         return round( ($emision + $adhesion + $participacion) , 2);
     }
