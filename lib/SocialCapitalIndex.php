@@ -70,11 +70,13 @@ class SocialCapitalIndex extends Managed_DataObject
         $sc = new SocialCapitalIndex();
         $sc->user_id = $user_id;
         $sc->ttl_notices = 0;
-        $sc->ttl_replies = 0;
-        $sc->ttl_bookmarks = 0;
         $sc->ttl_followers = 0;
-        $sc->ttl_mentions = 0;
         $sc->ttl_following = 0;
+
+        $sc->ttl_mentions = 0; //replies
+        $sc->ttl_faved = 0;
+
+
 
         $user = User::getKV('id', $user_id);
 
@@ -182,6 +184,8 @@ class SocialCapitalIndex extends Managed_DataObject
         // People who mentioned you
         $sc->ttl_mentions = SocialCapitalIndex::mentionsCount($profile->id);
 
+        $sc->ttl_faved = SocialCapitalIndex::favesCount($profile->id);
+
         /*
         foreach($mentions[$user_id] as $mention) {
 
@@ -230,7 +234,7 @@ class SocialCapitalIndex extends Managed_DataObject
     {
         $emision = ($this->ttl_notices * 20) / 100;
         //$adhesion = $this->ttl_o_faved + $this->ttl_followers;
-        $adhesion = $this->ttl_followers;
+        $adhesion = $this->ttl_followers + $this->ttl_faved;
         $participacion = $this->ttl_mentions + $this->ttl_following;
         return round( ($emision + $adhesion + $participacion) , 2);
     }
@@ -255,6 +259,43 @@ class SocialCapitalIndex extends Managed_DataObject
 
         if (!empty($c)) {
             $c->set(Cache::key('socialcapital:mention_count:'.$profile_id), $cnt);
+        }
+
+        return $cnt;
+    }
+
+    function favesCount($profile_id)
+    {
+        $c = Cache::instance();
+
+        if (!empty($c)) {
+            $cnt = $c->get(Cache::key('socialcapital:faves_count:'.$profile_id));
+            if (is_integer($cnt)) {
+                return (int) $cnt;
+            }
+        }
+
+        $faved = self::cachedQuery('Fave', sprintf("SELECT * FROM fave"));
+
+        $faves = 0;
+
+        foreach($faved->_items as $fave) {
+
+            $notice = Notice::getKV('id', $fave->notice_id);
+
+            // User's faves
+            if(!empty($notice)){
+
+                if($notice->profile_id == $profile_id) {
+                    $faves++;
+                }
+            }
+        }
+
+        $cnt = (int) $faves;
+
+        if (!empty($c)) {
+            $c->set(Cache::key('socialcapital:faves_count:'.$profile_id), $cnt);
         }
 
         return $cnt;

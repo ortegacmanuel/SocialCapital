@@ -74,6 +74,8 @@ class SCIndexDetailAction extends Action
 
         $this->user = User::getKV('id', $this->arg('id'));
 
+        $this->profile = $this->user->getProfile();
+
         $this->sc = SocialCapitalIndex::init($this->arg('id'));
 
         return true;
@@ -137,11 +139,11 @@ class SCIndexDetailAction extends Action
         } else {
             $this->element('p', array('class' => 'greeting'),
                            // TRANS: Message in sample plugin. %s is a user nickname.
-                           sprintf(_m('%s ha publicado %d mensajes, está subscrito a %d usuarios y tiene %d suscriptores. %s ha sido mencionado en %d ocasiones'), $this->user->nickname, $this->sc->ttl_notices, $this->sc->ttl_following, $this->sc->ttl_followers, $this->user->nickname, $this->sc->ttl_mentions));
+                           sprintf(_m('%s ha publicado %d mensajes, está subscrito a %d usuarios y tiene %d suscriptores. %s ha sido mencionado en %d ocasiones y marcado como favorito %d veces.'), $this->profile->fullname, $this->sc->ttl_notices, $this->sc->ttl_following, $this->sc->ttl_followers, $this->profile->fullname, $this->sc->ttl_mentions, $this->sc->ttl_faved));
 
             $this->element('p', array('class' => 'greeting'),
                            // TRANS: Message in sample plugin. %s is a user nickname.
-                           sprintf(_m('El Social Capital Index de %s es: %.2f'), $this->user->nickname, $this->sc->index()));
+                           sprintf(_m('El Social Capital Index de %s es: %.2f'), $this->profile->fullname, $this->sc->index()));
 
         }
     }
