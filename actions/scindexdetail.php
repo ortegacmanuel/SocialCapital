@@ -149,13 +149,13 @@ class SCIndexDetailAction extends Action
 
             $this->element('p', array('class' => 'greeting'),
                            // TRANS: Message in sample plugin. %s is a user nickname.
-                           sprintf(_m('%s tiene %d suscriptores, sus noticias han sido marcadas como favoritas en %d ocasiones y compartidas %d veces.'), $this->profile->fullname, $this->sc->ttl_followers, $this->sc->ttl_faved, $this->sc->ttl_shared));
+                           sprintf(_m('%s tiene %d suscriptores, sus noticias han sido marcadas como favoritas en %d ocasiones.'), $this->profile->fullname, $this->sc->ttl_followers, $this->sc->ttl_faved));
 
             $this->element('h3', array('class' => 'greeting'), 'Participación (+8)');
 
             $this->element('p', array('class' => 'greeting'),
                            // TRANS: Message in sample plugin. %s is a user nickname.
-                           sprintf(_m('%s ha sido mencionado en %d ocasiones y está subscrito a %d usuarios.'), $this->profile->fullname, $this->sc->ttl_mentions, $this->sc->ttl_following));
+                           sprintf(_m('%s ha sido mencionado en %d ocasiones y está subscrito a %d usuarios. Sus publicaciones han sido compartidas %d veces.'), $this->profile->fullname, $this->sc->ttl_mentions, $this->sc->ttl_following, $this->sc->ttl_shared));
 
             $this->element('h3', array('class' => 'greeting'), 'Interacción (+50)');
 

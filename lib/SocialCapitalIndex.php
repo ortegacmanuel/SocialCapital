@@ -243,8 +243,8 @@ class SocialCapitalIndex extends Managed_DataObject
     function index()
     {
         $emision = ($this->ttl_notices + $this->ttl_shares) * 2;
-        $adhesion = ($this->ttl_followers + $this->ttl_faved + $this->ttl_shared) * 5;
-        $participacion = ($this->ttl_mentions + $this->ttl_following) * 8;
+        $adhesion = ($this->ttl_followers + $this->ttl_faved) * 5;
+        $participacion = ($this->ttl_mentions + $this->ttl_following + $this->ttl_shared) * 8;
         $interaccion = $this->ttl_noticesFromBlog * 50;
         return round( ($emision + $adhesion + $participacion + $interaccion) , 2);
     }
