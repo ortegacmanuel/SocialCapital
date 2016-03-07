@@ -75,7 +75,10 @@ class SocialCapitalIndex extends Managed_DataObject
 
         $sc->ttl_mentions = 0; //replies
         $sc->ttl_faved = 0;
+        $sc->ttl_shares = 0;
         $sc->ttl_shared = 0;
+
+        $sc->ttl_noticesFromBlog = 0;
 
 
 
@@ -187,7 +190,11 @@ class SocialCapitalIndex extends Managed_DataObject
 
         $sc->ttl_faved = SocialCapitalIndex::favesCount($profile->id);
 
-        $sc->ttl_shared = SocialCapitalIndex::sharesCount($profile->id);
+        $sc->ttl_shares = SocialCapitalIndex::sharesCount($profile->id);
+
+        $sc->ttl_shared = SocialCapitalIndex::sharedCount($profile->id);
+
+        $sc->ttl_noticesFromBlog = SocialCapitalIndex::noticesFromBlogCount($profile->id);
 
         /*
         foreach($mentions[$user_id] as $mention) {
@@ -235,11 +242,11 @@ class SocialCapitalIndex extends Managed_DataObject
 
     function index()
     {
-        $emision = ($this->ttl_notices * 20) / 100;
-        //$adhesion = $this->ttl_o_faved + $this->ttl_followers;
-        $adhesion = $this->ttl_followers + $this->ttl_faved;
-        $participacion = $this->ttl_mentions + $this->ttl_following + $this->ttl_shared;
-        return round( ($emision + $adhesion + $participacion) , 2);
+        $emision = ($this->ttl_notices + $this->ttl_shares) * 2;
+        $adhesion = ($this->ttl_followers + $this->ttl_faved + $this->ttl_shared) * 5;
+        $participacion = ($this->ttl_mentions + $this->ttl_following) * 8;
+        $interaccion = $this->ttl_noticesFromBlog * 50;
+        return round( ($emision + $adhesion + $participacion + $interaccion) , 2);
     }
 
     function mentionsCount($profile_id)
@@ -316,6 +323,58 @@ class SocialCapitalIndex extends Managed_DataObject
 
         if (!empty($c)) {
             $c->set(Cache::key('socialcapital:shares_count:'.$profile_id), $cnt);
+        }
+
+        return $cnt;
+    }
+
+    function sharedCount($profile_id)
+    {
+        $c = Cache::instance();
+
+        if (!empty($c)) {
+            $cnt = $c->get(Cache::key('socialcapital:shared_count:'.$profile_id));
+            if (is_integer($cnt)) {
+                return (int) $cnt;
+            }
+        }
+
+        $shared = new Notice();
+        $shared->whereAdd(sprintf('repeat_of IN (SELECT id FROM notice WHERE profile_id=%d)', $profile_id));
+
+        $shares = $shared->count('id');
+
+        $cnt = (int) $shares;
+
+        if (!empty($c)) {
+            $c->set(Cache::key('socialcapital:shared_count:'.$profile_id), $cnt);
+        }
+
+        return $cnt;
+    }
+
+    function noticesFromBlogCount($profile_id)
+    {
+        $c = Cache::instance();
+
+        if (!empty($c)) {
+            $cnt = $c->get(Cache::key('socialcapital:noticesfromblog_count:'.$profile_id));
+            if (is_integer($cnt)) {
+                return (int) $cnt;
+            }
+        }
+
+
+        $noticesFromBlog = new Notice();
+        $noticesFromBlog->profile_id = $profile_id;
+        $noticesFromBlog->source = 'wpgnusocial';
+
+        $notices = $noticesFromBlog->count('id');
+
+        $cnt = (int) $notices;
+
+        if (!empty($c)) {
+            $c->set(Cache::key('socialcapital:noticesfromblog_count:'.$profile_id), $cnt);
         }
 
         return $cnt;
