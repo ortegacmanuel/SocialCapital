@@ -117,6 +117,23 @@ class SocialCapitalPlugin extends Plugin
         return true;
     }
 
+    function onEndProfileListItemProfile($item) {
+
+        try {
+            $sc = SocialCapitalIndex::init($item->profile->id);
+            $index = $sc->index();
+            $item->out->elementStart('td', 'entry_socialcapital_index');
+            $item->out->text($index);
+            $item->out->elementEnd('td');
+        } catch (Exception $e) {
+            $item->out->elementStart('td', 'entry_socialcapital_index');
+            $item->out->text('error');
+            $item->out->elementEnd('td');
+        }
+       
+        return true;
+    }
+
     function onEndShowAccountProfileBlock(HTMLOutputter $out, Profile $profile) {
         $user = User::getKV('id', $profile->id);
         if ($user) {
