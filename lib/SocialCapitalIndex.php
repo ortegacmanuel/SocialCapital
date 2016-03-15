@@ -176,7 +176,6 @@ class SocialCapitalIndex extends Managed_DataObject
 
         $rep = new Reply();
         $rep->profile_id = $profile_id;
-        $rep->whereAdd(sprintf('modified > %s', strtotime("-4 months")));
 
         $cnt = (int) $rep->count();
 
@@ -231,7 +230,6 @@ class SocialCapitalIndex extends Managed_DataObject
         $share = new Notice();
         $share->whereAdd('repeat_of IS NOT NULL');
         $share->whereAdd(sprintf('notice.profile_id = %d', $profile_id));
-        $share->whereAdd(sprintf('modified > %s', strtotime("-4 months")));
         
         $shares = $share->count('id');
 
@@ -258,7 +256,6 @@ class SocialCapitalIndex extends Managed_DataObject
 
         $shared = new Notice();
         $shared->whereAdd(sprintf('repeat_of IN (SELECT id FROM notice WHERE profile_id=%d)', $profile_id));
-        $shared->whereAdd(sprintf('modified > %s', strtotime("-4 months")));
 
         $shares = $shared->count('id');
 
@@ -286,7 +283,6 @@ class SocialCapitalIndex extends Managed_DataObject
         $noticesFromBlog = new Notice();
         $noticesFromBlog->profile_id = $profile_id;
         $noticesFromBlog->source = 'wpgnusocial';
-        $noticesFromBlog->whereAdd(sprintf('modified > %s', strtotime("-4 months")));
 
         $notices = $noticesFromBlog->count('id');
 
