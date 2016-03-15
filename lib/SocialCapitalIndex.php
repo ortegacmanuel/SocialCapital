@@ -27,11 +27,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-if (!defined('GNUSOCIAL') || !defined('STATUSNET')) {
-    // This check helps protect against security problems;
-    // your code file can't be executed directly from the web.
-    exit(1);
-}
+if (!defined('GNUSOCIAL')) { exit(1); }
 
 /**
  * Data class for Social Analytics stats
@@ -62,13 +58,55 @@ class SocialCapitalIndex extends Managed_DataObject
         return array();
     }
 
+    static function getIndex($profile_id)
+    {
+        
+        $index = 0;
+
+        $sci = new Social_capital();
+
+        // ya tiene un registro anterior?
+        if(!$sci->get($profile_id)) {
+            //no
+            $sc = self::init($profile_id);
+            $index = $sc->index();
+
+            $sci->social_index = $index;
+            $sci->created = now();
+            $sci->updated = now();
+
+            $sci->insert();
+            //si
+        } else {
+            
+            $updated = new DateTime($sci->updated);
+            
+            //esta actualizado?
+            if($updated->diff(new DateTime())->h > 24) {
+                //no
+                $sc = self::init($profile_id);
+                $index = $sc->index();
+
+                $sci->social_index = $index;
+
+                $sci->update();
+                
+            } else {
+                // si
+                $index = $sci->social_index;
+            }
+        }
+
+        return $index;
+    }
+
     /**
      * TODO: Document
      */
-    static function init($user_id)
+    static function init($profile_id)
     {
         $sc = new SocialCapitalIndex();
-        $sc->user_id = $user_id;
+        $sc->profile_id = $profile_id;
         $sc->ttl_notices = 0;
         $sc->ttl_followers = 0;
         $sc->ttl_following = 0;
@@ -82,159 +120,35 @@ class SocialCapitalIndex extends Managed_DataObject
 
 
 
-        $user = User::getKV('id', $user_id);
+        $user = User::getKV('id', $profile_id);
 
         if (!empty($user)) {
 
-        $profile = $user->getProfile();
+            $profile = $user->getProfile();
 
-        $sc->ttl_notices = 0;
-        $sc->ttl_replies = 0;
-        $sc->ttl_bookmarks = 0;
+            $sc->ttl_notices = 0;
+            $sc->ttl_replies = 0;
+            $sc->ttl_bookmarks = 0;
 
-        // Gather "Notice" information from db and place into appropriate arrays
-        $sc->ttl_notices = $profile->noticeCount();
+            $sc->ttl_notices = $profile->noticeCount();
 
-        // $notices = self::cachedQuery('Notice', sprintf("SELECT * FROM notice
-        //     WHERE profile_id = %d",
-        //     $user_id));
-        //
-        //
-        //
-        // $sc->ttl_notices = count($notices->_items);
+            // Hosts you are following
+            $sc->ttl_following = $profile->subscriptionCount();
 
-            /*
-        foreach($notices->_items as $notice) {
+            // Hosts who follow you
+            $sc->ttl_followers = $profile->subscriberCount();
 
+            // People who mentioned you
+            $sc->ttl_mentions = SocialCapitalIndex::mentionsCount($profile->id);
 
-            $date_created->modify($notice->created); // String to Date
+            $sc->ttl_faved = SocialCapitalIndex::favesCount($profile->id);
 
-            // Extract group info
-            $groups = $notice->getGroups();
-            foreach ($groups as $group) {
-                $sa->graphs['notices_per_group'][$group->nickname]['notices'][] = $notice;
-            }
+            $sc->ttl_shares = SocialCapitalIndex::sharesCount($profile->id);
 
-            // Extract hashtag info
-            $hashtags = $notice->getTags();
-            foreach($hashtags as $hashtag) {
-                $sa->graphs['notices_per_hashtag'][$hashtag]['notices'][] = $notice;
-            }
+            $sc->ttl_shared = SocialCapitalIndex::sharedCount($profile->id);
 
-            // Repeats
-            if($notice->repeat_of) {
-                $repeat = Notice::getKV('id', $notice->repeat_of);
-                $u_repeat = Profile::getKV('id', $repeat->profile_id);
+            $sc->ttl_noticesFromBlog = SocialCapitalIndex::noticesFromBlogCount($profile->id);
 
-                if(!isset($sa->graphs['people_you_repeated'][$u_repeat->nickname])) {
-                    $sa->graphs['people_you_repeated'][$u_repeat->nickname] = array('notices' => array());
-                }
-                $sa->graphs['people_you_repeated'][$u_repeat->nickname]['notices'][] = $notice;
-                $sa->graphs['trends'][$date_created->format('Y-m-d')]['repeats'][] = $notice;
-            }
-
-            // Clients
-            if(!isset($sa->graphs['clients'][$notice->source])) {
-                $sa->graphs['clients'][$notice->source] = array('clients' => array());
-            }
-            $sa->graphs['clients'][$notice->source]['clients'][] = $notice;
-
-            // Replies
-            if($notice->reply_to) {
-                $reply_to = Notice::getKV('id', $notice->reply_to);
-                $repliee = Profile::getKV('id', $reply_to->profile_id);
-
-                if(!isset($sa->graphs['people_you_replied_to'][$repliee->nickname])) {
-                    $sa->graphs['people_you_replied_to'][$repliee->nickname] = array('notices' => array());
-                }
-                $sa->graphs['people_you_replied_to'][$repliee->nickname]['notices'][] = $notice;
-
-                $sa->ttl_replies++;
-            }
-
-            // Bookmarks
-            if(preg_match('/\/bookmark$/', $notice->object_type)) {
-                $sa->graphs['trends'][$date_created->format('Y-m-d')]['bookmarks'][] = $notice;
-                $sa->ttl_bookmarks++;
-            }
-
-            // Notices
-            $sa->graphs['trends'][$date_created->format('Y-m-d')]['notices'][] = $notice;
-
-
-            $sc->ttl_notices++; // FIXME: Do we want to include bookmarks with notices now that we have a 'bookmarks' trend?
-        }
-
-        */
-
-
-        // Favored notices (both by 'you' and 'others')
-        //$sc->ttl_faves = 0;
-        //$sc->ttl_o_faved = 0;
-        //$faved = self::cachedQuery('Fave', sprintf("SELECT * FROM fave"));
-
-        /*
-        foreach($faved->_items as $fave) {
-
-            $notice = Notice::getKV('id', $fave->notice_id);
-
-            // User's faves
-            if($notice->profile_id == $user_id) {
-                $sc->ttl_o_faved++;
-            }
-        }
-        */
-
-        // People who mentioned you
-        $sc->ttl_mentions = SocialCapitalIndex::mentionsCount($profile->id);
-
-        $sc->ttl_faved = SocialCapitalIndex::favesCount($profile->id);
-
-        $sc->ttl_shares = SocialCapitalIndex::sharesCount($profile->id);
-
-        $sc->ttl_shared = SocialCapitalIndex::sharedCount($profile->id);
-
-        $sc->ttl_noticesFromBlog = SocialCapitalIndex::noticesFromBlogCount($profile->id);
-
-        /*
-        foreach($mentions[$user_id] as $mention) {
-
-                $sc->ttl_mentions++;
-        }
-        */
-
-        // Hosts you are following
-        $sc->ttl_following = $profile->subscriptionCount();
-        // $sc->ttl_following = 0;
-        // $arr_following = self::listGetClass('Subscription', 'subscriber', array($user_id));
-        //
-        // $sc->ttl_following = count($arr_following[$user_id]);
-        /*
-        foreach($arr_following[$user_id] as $following) {
-            // This is in my DB, but doesn't show up in my 'Following' total (???)
-            if($following->subscriber == $following->subscribed) {
-                continue;
-            }
-            $sc->ttl_following++;
-        }
-        */
-
-        // Hosts who follow you
-        $sc->ttl_followers = $profile->subscriberCount();
-        // $sc->ttl_followers = 0;
-        // $followers = self::listGetClass('Subscription', 'subscribed', array($user_id));
-        //
-        // $sc->ttl_followers = count($followers[$user_id]);
-        /*
-        foreach($followers[$user_id] as $follower) {
-            // This is in my DB, but doesn't show up in my 'Following' total (???)
-            if($follower->subscriber == $follower->subscribed) {
-                continue;
-            }
-
-            $sc->ttl_followers++;
-        }
-        */
         }
 
         return $sc;    
@@ -262,6 +176,7 @@ class SocialCapitalIndex extends Managed_DataObject
 
         $rep = new Reply();
         $rep->profile_id = $profile_id;
+        $rep->whereAdd(sprintf('modified > %s', strtotime("-4 months")));
 
         $cnt = (int) $rep->count();
 
@@ -288,6 +203,7 @@ class SocialCapitalIndex extends Managed_DataObject
         $fave = new Fave();
         $fave->joinAdd(array('notice_id', 'notice:id'));
         $fave->whereAdd(sprintf('notice.profile_id = %d', $profile_id));
+        $fave->whereAdd(sprintf('fave.modified > %s', strtotime("-4 months")));
         
         $faves = $fave->count('notice_id');
 
@@ -315,6 +231,7 @@ class SocialCapitalIndex extends Managed_DataObject
         $share = new Notice();
         $share->whereAdd('repeat_of IS NOT NULL');
         $share->whereAdd(sprintf('notice.profile_id = %d', $profile_id));
+        $share->whereAdd(sprintf('modified > %s', strtotime("-4 months")));
         
         $shares = $share->count('id');
 
@@ -341,6 +258,7 @@ class SocialCapitalIndex extends Managed_DataObject
 
         $shared = new Notice();
         $shared->whereAdd(sprintf('repeat_of IN (SELECT id FROM notice WHERE profile_id=%d)', $profile_id));
+        $shared->whereAdd(sprintf('modified > %s', strtotime("-4 months")));
 
         $shares = $shared->count('id');
 
@@ -368,6 +286,7 @@ class SocialCapitalIndex extends Managed_DataObject
         $noticesFromBlog = new Notice();
         $noticesFromBlog->profile_id = $profile_id;
         $noticesFromBlog->source = 'wpgnusocial';
+        $noticesFromBlog->whereAdd(sprintf('modified > %s', strtotime("-4 months")));
 
         $notices = $noticesFromBlog->count('id');
 

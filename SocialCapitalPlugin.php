@@ -48,30 +48,10 @@ class SocialCapitalPlugin extends Plugin
         return true;
     }
 
-    //function onAutoload($cls)
-    //{
-    //   $dir = dirname(__FILE__);
-    //    switch ($cls)
-    //    {
-    //        case 'SocialCapitalIndex':
-    //            include_once $dir . '/lib/'.$cls.'.php';
-    //            return false;
-    //        default:
-    //            return true;
-    //    }
-    //}
-
-    function onPluginVersion(array &$versions)
+    function onCheckSchema()
     {
-        $versions[] = array(
-            'name' => 'SocialCapital',
-            'version' => GNUSOCIAL_VERSION,
-            'author' => 'Manuel Ortega',
-            'homepage' => 'http://git.lasindias.club/manuel/SocialCapital',
-            // TRANS: Plugin description.
-            'rawdescription' => _m('Social capital index')
-        );
-
+        $schema = Schema::get();
+        $schema->ensureTable('social_capital', Social_capital::schemaDef());
         return true;
     }
 
@@ -93,12 +73,6 @@ class SocialCapitalPlugin extends Plugin
         return true;
     }
 
-    function onCheckSchema()
-    {
-        return true;
-    }
-
-
     /**
      * Add social capital to the API response
      *
@@ -107,8 +81,7 @@ class SocialCapitalPlugin extends Plugin
     function onTwitterUserArray($profile, &$twitter_user, $scoped)
     {
         try {
-            $sc = SocialCapitalIndex::init($profile->id);
-            $index = $sc->index();
+            $index = SocialCapitalIndex::getIndex($profile->id);
             $twitter_user['social_capital'] = $index;
         } catch (Exception $e) {
             $twitter_user['social_capital'] = 'error';
@@ -120,8 +93,7 @@ class SocialCapitalPlugin extends Plugin
     function onEndProfileListItemProfile($item) {
 
         try {
-            $sc = SocialCapitalIndex::init($item->profile->id);
-            $index = $sc->index();
+            $index = SocialCapitalIndex::getIndex($item->profile->id);
             $item->out->elementStart('td', 'entry_socialcapital_index');
             $item->out->text($index);
             $item->out->elementEnd('td');
@@ -138,11 +110,11 @@ class SocialCapitalPlugin extends Plugin
         $user = User::getKV('id', $profile->id);
         if ($user) {
 
-                $this->sc = SocialCapitalIndex::init($user->id);
+                $index = SocialCapitalIndex::getIndex($profile->id);
 
                 $out->elementStart('dl');
                 $out->element('dt', array('style' => 'display:inline;'), _m('Social capital index:'));
-                $out->element('dd', array('style' => 'display:inline;'), $this->sc->index() );
+                $out->element('dd', array('style' => 'display:inline;'), $index );
                 $out->elementEnd('dl');
         }
     }
@@ -157,6 +129,21 @@ class SocialCapitalPlugin extends Plugin
     function onQvitterEndShowScripts($action)
     {
         print '<script type="text/javascript" src="'.$this->path('js/socialcapital.qvitter.js').'"></script>'."\n";
+    }
+
+
+    function onPluginVersion(array &$versions)
+    {
+        $versions[] = array(
+            'name' => 'SocialCapital',
+            'version' => GNUSOCIAL_VERSION,
+            'author' => 'Manuel Ortega',
+            'homepage' => 'http://git.lasindias.club/manuel/SocialCapital',
+            // TRANS: Plugin description.
+            'rawdescription' => _m('Social capital index')
+        );
+
+        return true;
     }
 
 }
