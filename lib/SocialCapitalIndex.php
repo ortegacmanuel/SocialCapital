@@ -202,7 +202,6 @@ class SocialCapitalIndex extends Managed_DataObject
         $fave = new Fave();
         $fave->joinAdd(array('notice_id', 'notice:id'));
         $fave->whereAdd(sprintf('notice.profile_id = %d', $profile_id));
-        $fave->whereAdd(sprintf('fave.modified > %s', strtotime("-4 months")));
         
         $faves = $fave->count('notice_id');
 
