@@ -73,14 +73,28 @@ class SocialCapitalIndex extends Managed_DataObject
 
             $sci->social_index = $index;
 
+            $sci->created = common_sql_now();
+
             $sci->insert();
+
             //si
         } else {
             
             $updated = new DateTime($sci->updated);
-            
+            $ahora = new DateTime("now");
+
+            $diferencia = date_diff($updated, $ahora);
+
+            $horas = ((int) $diferencia->format('%a') * 24) + (int) $diferencia->format('%h');
+
+            error_log('actualizado: ' . $updated->format('Y-m-d H:i:s'));
+            error_log('ahora: ' . $ahora->format('Y-m-d H:i:s'));
+            error_log('Diferencia dias: ' . $diferencia->format('%a'));
+            error_log('Diferencia horas: ' . $diferencia->format('%h') );
+            error_log('total horas: ' . $horas);            
+
             //esta actualizado?
-            if($updated->diff(new DateTime())->h > 24) {
+            if($horas > 12) {
                 //no
                 $sc = self::init($profile_id);
                 $index = $sc->index();
@@ -128,7 +142,7 @@ class SocialCapitalIndex extends Managed_DataObject
             $sc->ttl_replies = 0;
             $sc->ttl_bookmarks = 0;
 
-            $sc->ttl_notices = $profile->noticeCount();
+            $sc->ttl_notices = SocialCapitalIndex::noticeCount($profile->id);
 
             // Hosts you are following
             $sc->ttl_following = $profile->subscriptionCount();
@@ -161,6 +175,35 @@ class SocialCapitalIndex extends Managed_DataObject
         return round( ($emision + $adhesion + $participacion + $interaccion) , 2);
     }
 
+    function noticeCount($profile_id)
+    {
+        $c = Cache::instance();
+
+        if (!empty($c)) {
+            $cnt = $c->get(Cache::key('socialcapital:notice_count:'.$profile_id));
+            if (is_integer($cnt)) {
+                return (int) $cnt;
+            }
+        }
+
+        $fecha_4_meses = new DateTime();
+        $fecha_4_meses->setTimestamp(strtotime("-4 months"));
+
+        $notices = new Notice();
+        $notices->profile_id = $profile_id;
+        $notices->whereAdd(sprintf('created > "%s"', $fecha_4_meses->format('Y-m-d H:i:s')));
+        $notices->whereAddIn('verb',
+                                [ActivityUtils::resolveUri(ActivityVerb::POST, true), ActivityVerb::POST],
+                                $notices->columnType('verb'));
+        $cnt = (int) $notices->count(); // we don't have to provide anything as Notice is key'd
+
+        if (!empty($c)) {
+            $c->set(Cache::key('socialcapital:notice_count:'.$profile_id), $cnt);
+        }
+
+        return $cnt;
+    }
+
     function mentionsCount($profile_id)
     {
         $c = Cache::instance();
@@ -172,9 +215,12 @@ class SocialCapitalIndex extends Managed_DataObject
             }
         }
 
+        $fecha_4_meses = new DateTime();
+        $fecha_4_meses->setTimestamp(strtotime("-4 months"));
+
         $rep = new Reply();
         $rep->profile_id = $profile_id;
-        $rep->whereAdd(sprintf('modified > %s', strtotime("-4 months")));
+        $rep->whereAdd(sprintf('modified > "%s"', $fecha_4_meses->format('Y-m-d H:i:s')));
 
         $cnt = (int) $rep->count();
 
@@ -198,10 +244,13 @@ class SocialCapitalIndex extends Managed_DataObject
             }
         }
 
+        $fecha_4_meses = new DateTime();
+        $fecha_4_meses->setTimestamp(strtotime("-4 months"));
+
         $fave = new Fave();
         $fave->joinAdd(array('notice_id', 'notice:id'));
         $fave->whereAdd(sprintf('notice.profile_id = %d', $profile_id));
-        $fave->whereAdd(sprintf('fave.modified > %s', strtotime("-4 months")));
+        $fave->whereAdd(sprintf('fave.modified > "%s"', $fecha_4_meses->format('Y-m-d H:i:s')));
         
         $faves = $fave->count('notice_id');
 
@@ -226,10 +275,13 @@ class SocialCapitalIndex extends Managed_DataObject
             }
         }
 
+        $fecha_4_meses = new DateTime();
+        $fecha_4_meses->setTimestamp(strtotime("-4 months"));
+
         $share = new Notice();
         $share->whereAdd('repeat_of IS NOT NULL');
         $share->whereAdd(sprintf('notice.profile_id = %d', $profile_id));
-        $share->whereAdd(sprintf('modified > %s', strtotime("-4 months")));
+        $share->whereAdd(sprintf('modified > "%s"', $fecha_4_meses->format('Y-m-d H:i:s')));
         
         $shares = $share->count('id');
 
@@ -254,9 +306,12 @@ class SocialCapitalIndex extends Managed_DataObject
             }
         }
 
+        $fecha_4_meses = new DateTime();
+        $fecha_4_meses->setTimestamp(strtotime("-4 months"));
+
         $shared = new Notice();
         $shared->whereAdd(sprintf('repeat_of IN (SELECT id FROM notice WHERE profile_id=%d)', $profile_id));
-        $shared->whereAdd(sprintf('modified > %s', strtotime("-4 months")));
+        $shared->whereAdd(sprintf('modified > "%s"', $fecha_4_meses->format('Y-m-d H:i:s')));
 
         $shares = $shared->count('id');
 
@@ -280,11 +335,13 @@ class SocialCapitalIndex extends Managed_DataObject
             }
         }
 
+        $fecha_4_meses = new DateTime();
+        $fecha_4_meses->setTimestamp(strtotime("-4 months"));
 
         $noticesFromBlog = new Notice();
         $noticesFromBlog->profile_id = $profile_id;
         $noticesFromBlog->source = 'wpgnusocial';
-        $noticesFromBlog->whereAdd(sprintf('modified > %s', strtotime("-4 months")));
+        $noticesFromBlog->whereAdd(sprintf('modified > "%s"', $fecha_4_meses->format('Y-m-d H:i:s')));
 
         $notices = $noticesFromBlog->count('id');
 
