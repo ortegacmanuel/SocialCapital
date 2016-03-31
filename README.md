@@ -8,7 +8,7 @@ Una vez instalado SocialCapital agrega al perfil de cada usuario información so
 
 # Instalación
 
-Clonar ''SocialCapital'' dentro del directorio ''local/plugins'' y activarlo en config.php:
+Clonar 'SocialCapital' dentro del directorio 'local/plugins' y activarlo en config.php:
 
 '''php
 addPlugin('SocialCapital');
