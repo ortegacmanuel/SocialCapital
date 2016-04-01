@@ -94,7 +94,7 @@ class SocialCapitalIndex extends Managed_DataObject
             error_log('total horas: ' . $horas);            
 
             //esta actualizado?
-            if($horas > 12) {
+            if($horas > 24) {
                 //no
                 $sc = self::init($profile_id);
                 $index = $sc->index();
